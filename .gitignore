@@ -1,0 +1,13 @@
+*.zip
+final
+en_US.blogs.txt
+en_US.news.txt
+en_US.twitter.txt
+test_US.blogs.txt
+test_US.news.txt
+test_US.twitter.txt
+test_US.txt
+train_US.blogs.txt
+train_US.twitter.txt
+train_US.news.txt
+train_US.txt
