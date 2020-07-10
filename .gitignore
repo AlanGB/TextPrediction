@@ -11,3 +11,5 @@ train_US.blogs.txt
 train_US.twitter.txt
 train_US.news.txt
 train_US.txt
+.RData
+.Rhistory
