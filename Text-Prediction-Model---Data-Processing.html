@@ -559,6 +559,59 @@ close(con)</code></pre>
 </div>
 </div>
 </div>
+<div id="data-preprocessing" class="section level2">
+<h2>Data Preprocessing</h2>
+<p>For this next step we will prepare our data before creating the models. The pipeline we will follow is as follows:</p>
+<pre><code> 1. **Remove special characters:** the punctuaction signs and other special characters, including numbers will be removed.
+    2. **Lowercase:** for simplicity we will use all our text in lowercase.
+    3. **Profanity filtering:** since we don&#39;t want our model to predict &#39;bad&#39; words.
+    </code></pre>
+<div id="special-characters-and-lowercasing" class="section level5">
+<h5>Special Characters and Lowercasing</h5>
+<pre class="r"><code>train &lt;- read_lines(&quot;./final/en_US/train_US.txt&quot;)
+
+library(tm)
+
+#Removing special characters
+train &lt;- iconv(train, to = &quot;UTF-8&quot;)
+train &lt;- removePunctuation(train)
+train &lt;- removeNumbers(train)
+train &lt;- stripWhitespace(train)
+
+#Lowercasing
+train &lt;- tolower(train)
+
+#Profanity filtering
+library(tm)
+
+con &lt;- url(&quot;http://www.bannedwordlist.com/lists/swearWords.txt&quot;,&quot;r&quot;)
+badwords &lt;- readLines(con)
+close(con)
+
+train &lt;- removeWords(train, badwords)</code></pre>
+</div>
+</div>
+<div id="n-gram-model" class="section level2">
+<h2>N-Gram Model</h2>
+<p>We will use the ‘quanteda’ library to create our N-grams model, and the process is the next:</p>
+<pre><code> 1. **Tokenization:**
+    2. **Remove stopwords:**
+    3. **Stemming:**
+    4. **Create the N-grams:**
+    </code></pre>
+<pre class="r"><code>library(quanteda)
+
+#Tokenize
+train.tokens &lt;- tokens(train, what = &quot;word&quot;,
+                       remove_numbers = TRUE, remove_punct = TRUE,
+                       remove_symbols = TRUE, split_hyphens = TRUE)
+#Removing stopwords
+train.tokens &lt;- tokens_select(train.tokens, stopwords(), selection = &quot;remove&quot;)
+
+#Stemming
+train.tokens &lt;- tokens_wordstem(train.tokens, language = &quot;english&quot;)
+train.tokens.dfm &lt;- dfm(train.tokens, tolower = FALSE)</code></pre>
+</div>
 
 
 

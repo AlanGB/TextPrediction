@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
 ```
 
 ## Summary
@@ -149,4 +150,62 @@ close(con)
 con <- file("./final/en_US/test_US.news.txt", "r")
 write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
 close(con)
+```
+
+## Data Preprocessing
+
+For this next step we will prepare our data before creating the models. The pipeline we will follow  is as follows:
+
+        1. **Remove special characters:** the punctuaction signs and other special characters, including numbers will be removed.
+        2. **Lowercase:** for simplicity we will use all our text in lowercase.
+        3. **Profanity filtering:** since we don't want our model to predict 'bad' words.
+        
+##### Special Characters and Lowercasing
+```{r remove cleaning the dataset}
+train <- read_lines("./final/en_US/train_US.txt")
+
+library(tm)
+
+#Removing special characters
+train <- iconv(train, to = "UTF-8")
+train <- removePunctuation(train)
+train <- removeNumbers(train)
+train <- stripWhitespace(train)
+
+#Lowercasing
+train <- tolower(train)
+
+#Profanity filtering
+library(tm)
+
+con <- url("http://www.bannedwordlist.com/lists/swearWords.txt","r")
+badwords <- readLines(con)
+close(con)
+
+train <- removeWords(train, badwords)
+```
+ 
+## N-Gram Model
+
+We will use the 'quanteda' library to create our N-grams model, and the process is the next:
+
+        1. **Tokenization:**
+        2. **Remove stopwords:**
+        3. **Stemming:**
+        4. **Create the N-grams:**
+        
+```{r ngram model, eval=FALSE}
+library(quanteda)
+
+#Tokenize
+train.tokens <- tokens(train, what = "word",
+                       remove_numbers = TRUE, remove_punct = TRUE,
+                       remove_symbols = TRUE, split_hyphens = TRUE)
+#Removing stopwords
+train.tokens <- tokens_select(train.tokens, stopwords(), selection = "remove")
+
+#Stemming
+train.tokens <- tokens_wordstem(train.tokens, language = "english")
+train.tokens.dfm <- dfm(train.tokens, tolower = FALSE)
+
 ```
