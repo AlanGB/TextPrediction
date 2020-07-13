@@ -1,0 +1,152 @@
+---
+title: "Text Prediction Model - Analyzing the Data"
+author: "Alán García Bernal"
+date: "12/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+## Summary
+
+The goal of this project is to create a Text Prediction Model (for the English Language) using the [Capstone Dataset](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) given by Coursera. In this report you will find an Overview of the data, as well as the steps taken for cleaning and processing the data. Lastly, there are the N-gram Models that will be used for creating the final product.
+
+## Data Overview
+
+After downloading and extracting the datasets we are interested in, which are a file with **Twitter**, **Blogs** and **News** entries, we can start seeing interesting aspects of the data.
+
+```{r data loading}
+library(readr)
+twitter.file <- ("./final/en_US/en_US.twitter.txt")
+blogs.file <- ("./final/en_US/en_US.blogs.txt")
+news.file <- ("./final/en_US/en_US.news.txt")
+
+twitter <- read_lines(twitter.file)
+blogs <- read_lines(blogs.file)
+news <- read_lines(news.file)
+```
+
+Here we can see the files are fairly large, but have about the same word count. Also, as expected, Twitter is the file with more lines but less Average words, because of the character limit per twitt. Blogs is the file with more words per register, followed by news.
+
+```{r data overvew, warning=FALSE}
+library(stringi)
+rows <- c("Twitter", "Blogs", "News")
+
+Size.MB <- setNames(as.data.frame(
+                        file.size(twitter.file, blogs.file, news.file)/1024,
+                        row.names = rows),
+                    c("Size.MB"))
+
+Rows <- setNames(as.data.frame(c(length(twitter), length(blogs), length(news)),
+                               row.names = rows),
+                 c("Rows"))
+
+Words <- setNames(as.data.frame(c(sum(stri_count_words(twitter)),
+                         sum(stri_count_words(blogs)),
+                         sum(stri_count_words(news))),
+                         row.names= rows),
+                  c("Total Words"))
+
+Words.Ave <- setNames(as.data.frame(c(mean(stri_count_words(twitter)),
+                                      mean(stri_count_words(blogs)),
+                                      mean(stri_count_words(news))),
+                                    row.names = rows),
+                      c("Average Words"))
+
+data.overview <- cbind(Size.MB, Rows, Words, Words.Ave)
+```
+
+```{r data overview table, echo = FALSE, warning=FALSE}
+library(formattable)
+data.overview$`Average Words` <- format(round(as.numeric(data.overview$`Average Words`),digits = 0), nsmall = 0)
+data.overview$`Total Words` <- format(as.numeric(data.overview$`Total Words`), nsmall = 0, big.mark =",")
+data.overview$Rows <- format(as.numeric(data.overview$Rows), nsmall=0, big.mark=",")
+data.overview$Size.MB <- format(round(as.numeric(data.overview$Size.MB), 1), nsmall=1, big.mark=",")
+
+
+formattable(data.overview,
+            align = c("l", "c", "c", "c", "c"))
+```
+
+## Data Sampling
+
+We will join this datasets into one *coropra* and then take samples from it to create two data sets: the **training set** and the **test set**. As a good practice, we will use the 70% of the *corpora* as our **training set** and the other 30% as our **test** set.
+
+For practicity we will create separte testing and training files for each one of the **Twitter**, **Blogs** and **News** data sets.
+
+#### Twitter files
+```{r twitter sampling, eval=FALSE}
+set.seed(123)
+con <- file("./final/en_US/en_US.twitter.txt", "r")
+for (i in 1:n.twitter) {
+        if (rbinom(1,1,.7) == 1) {
+                write(readLines(con,1), file = "./final/en_US/train_US.twitter.txt", append = TRUE)
+        } else {
+                write(readLines(con,1), file = "./final/en_US/test_US.twitter.txt", append = TRUE)
+        }
+}
+close(con)
+```
+
+#### Blogs files
+```{r blogs sampling, eval=FALSE}
+set.seed(456)
+con <- file("./final/en_US/en_US.blogs.txt", "r")
+for (i in 1:n.blogs) {
+        if (rbinom(1,1,.8) == 1) {
+                write(readLines(con,1), file = "./final/en_US/train_US.blogs.txt", append = TRUE)
+        } else {
+                write(readLines(con,1), file = "./final/en_US/test_US.blogs.txt", append = TRUE)
+        }
+}
+close(con)
+```
+
+#### News files
+```{r news sampling, eval=FALSE}
+news <- read_lines("./final/en_US/en_US.news.txt")
+set.seed(789)
+for (i in 1:length(news)) {
+        if(rbinom(1,1,.7) == 1) {
+                write(news[i], file = "./final/en_US/train_US.news.txt", append = TRUE)
+        } else {
+                write(news[i], file = "./final/en_US/test_US.news.txt", append = TRUE)
+        }
+}
+```
+
+#### Final Datasets
+Lastly, we will merge the training and testing sets into two files for easy accesing.
+
+##### Training
+```{r training set, eval=FALSE}
+con <- file("./final/en_US/train_US.twitter.txt", "r")
+write(readLines(con), file = "./final/en_US/train_US.txt", append = TRUE)
+close(con)
+
+con <- file("./final/en_US/train_US.blogs.txt", "r")
+write(readLines(con), file = "./final/en_US/train_US.txt", append = TRUE)
+close(con)
+
+con <- file("./final/en_US/train_US.news.txt", "r")
+write(readLines(con), file = "./final/en_US/train_US.txt", append = TRUE)
+close(con)
+```
+
+##### Testing
+```{r testing set, eval=FALSE}
+con <- file("./final/en_US/test_US.twitter.txt", "r")
+write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
+close(con)
+
+con <- file("./final/en_US/test_US.blogs.txt", "r")
+write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
+close(con)
+
+con <- file("./final/en_US/test_US.news.txt", "r")
+write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
+close(con)
+```
