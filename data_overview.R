@@ -55,4 +55,4 @@ data.overview$`Total Words` <- format(as.numeric(data.overview$`Total Words`), n
 data.overview$Rows <- format(as.numeric(data.overview$Rows), nsmall=0, big.mark=",")
 data.overview$Size.MB <- format(round(as.numeric(data.overview$Size.MB), 1), nsmall=1, big.mark=",")
 
-formattable(data.overview, align = c("l", "c", "C", "c", "c"))
+formattable(data.overview, align = c('l', 'c', 'c', 'c', 'c'))

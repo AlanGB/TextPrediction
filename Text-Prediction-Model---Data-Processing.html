@@ -486,30 +486,43 @@ News
 </div>
 <div id="data-sampling" class="section level2">
 <h2>Data Sampling</h2>
-<p>We will join this datasets into one <em>coropra</em> and then take samples from it to create two data sets: the <strong>training set</strong> and the <strong>test set</strong>. As a good practice, we will use the 70% of the <em>corpora</em> as our <strong>training set</strong> and the other 30% as our <strong>test</strong> set.</p>
-<p>For practicity we will create separte testing and training files for each one of the <strong>Twitter</strong>, <strong>Blogs</strong> and <strong>News</strong> data sets.</p>
+<p>Since the dataset is so large, and due to hardware constrains, we will be using the 15% of the total data. We will join this subsets into one <em>coropra</em> and divide them to create three data sets: the <strong>training set</strong>, <strong>validation set</strong> and the <strong>test set</strong>. As a good practice, we will use the 70% of the <em>corpora</em> as our <strong>training set</strong>, 20% for our <strong>validation set</strong> and the other 10% as our <strong>test set</strong>.</p>
+<p>For practicity we will create separte testing, validation and training files for each one of the <strong>Twitter</strong>, <strong>Blogs</strong> and <strong>News</strong> data sets.</p>
 <div id="twitter-files" class="section level4">
 <h4>Twitter files</h4>
 <pre class="r"><code>set.seed(123)
 con &lt;- file(&quot;./final/en_US/en_US.twitter.txt&quot;, &quot;r&quot;)
 for (i in 1:n.twitter) {
-        if (rbinom(1,1,.7) == 1) {
-                write(readLines(con,1), file = &quot;./final/en_US/train_US.twitter.txt&quot;, append = TRUE)
-        } else {
-                write(readLines(con,1), file = &quot;./final/en_US/test_US.twitter.txt&quot;, append = TRUE)
+        if (rbinom(1,1,.15) == 1) {
+                if (rbinom(1,1, .7) == 1) {
+                        write(readLines(con,1), file = &quot;./final/en_US/train_US.twitter.txt&quot;, append = TRUE)     
+                } else {
+                        if (rbinom(1,1, .2) == 1) {
+                                write(readLines(con,1), file = &quot;./final/en_US/validation_US.twitter.txt&quot;, append = TRUE)
+                        } else {
+                                write(readLines(con, 1), file = &quot;./final/en_US/test_US.twitter.txt&quot;, append = TRUE)
+                        }
+                }
+                
         }
-}
-close(con)</code></pre>
+}</code></pre>
 </div>
 <div id="blogs-files" class="section level4">
 <h4>Blogs files</h4>
 <pre class="r"><code>set.seed(456)
 con &lt;- file(&quot;./final/en_US/en_US.blogs.txt&quot;, &quot;r&quot;)
 for (i in 1:n.blogs) {
-        if (rbinom(1,1,.8) == 1) {
-                write(readLines(con,1), file = &quot;./final/en_US/train_US.blogs.txt&quot;, append = TRUE)
-        } else {
-                write(readLines(con,1), file = &quot;./final/en_US/test_US.blogs.txt&quot;, append = TRUE)
+        if (rbinom(1,1,.15) == 1) {
+                if (rbinom(1,1, .7) == 1) {
+                        write(readLines(con,1), file = &quot;./final/en_US/train_US.blogs.txt&quot;, append = TRUE)     
+                } else {
+                        if (rbinom(1,1, .2) == 1) {
+                                write(readLines(con,1), file = &quot;./final/en_US/validation_US.blogs.txt&quot;, append = TRUE)
+                        } else {
+                                write(readLines(con, 1), file = &quot;./final/en_US/test_US.blogs.txt&quot;, append = TRUE)
+                        }
+                }
+                
         }
 }
 close(con)</code></pre>
@@ -519,19 +532,25 @@ close(con)</code></pre>
 <pre class="r"><code>news &lt;- read_lines(&quot;./final/en_US/en_US.news.txt&quot;)
 set.seed(789)
 for (i in 1:length(news)) {
-        if(rbinom(1,1,.7) == 1) {
-                write(news[i], file = &quot;./final/en_US/train_US.news.txt&quot;, append = TRUE)
-        } else {
-                write(news[i], file = &quot;./final/en_US/test_US.news.txt&quot;, append = TRUE)
+        if(rbinom(1,1,.15) == 1) {
+                if (rbinom(1,1,.7) == 1) {
+                        write(news[i], file = &quot;./final/en_US/train_US.news.txt&quot;, append = TRUE)
+                } else {
+                        if (rbinom(1,1,.2) == 1) {
+                                write(news[i], file = &quot;./final/en_US/validation_US.news.txt&quot;, append = TRUE)
+                        } else {
+                                write(news[i], file = &quot;./final/en_US/test_US.news.txt&quot;, append = TRUE)
+                        }
+                }
         }
-}</code></pre>
+}
+rm(list = &quot;news&quot;)</code></pre>
 </div>
 <div id="final-datasets" class="section level4">
 <h4>Final Datasets</h4>
 <p>Lastly, we will merge the training and testing sets into two files for easy accesing.</p>
-<div id="training" class="section level5">
-<h5>Training</h5>
-<pre class="r"><code>con &lt;- file(&quot;./final/en_US/train_US.twitter.txt&quot;, &quot;r&quot;)
+<pre class="r"><code># training file
+con &lt;- file(&quot;./final/en_US/train_US.twitter.txt&quot;, &quot;r&quot;)
 write(readLines(con), file = &quot;./final/en_US/train_US.txt&quot;, append = TRUE)
 close(con)
 
@@ -541,11 +560,23 @@ close(con)
 
 con &lt;- file(&quot;./final/en_US/train_US.news.txt&quot;, &quot;r&quot;)
 write(readLines(con), file = &quot;./final/en_US/train_US.txt&quot;, append = TRUE)
-close(con)</code></pre>
-</div>
-<div id="testing" class="section level5">
-<h5>Testing</h5>
-<pre class="r"><code>con &lt;- file(&quot;./final/en_US/test_US.twitter.txt&quot;, &quot;r&quot;)
+close(con)
+
+# training file
+con &lt;- file(&quot;./final/en_US/validation_US.twitter.txt&quot;, &quot;r&quot;)
+write(readLines(con), file = &quot;./final/en_US/validation_US.txt&quot;, append = TRUE)
+close(con)
+
+con &lt;- file(&quot;./final/en_US/validation_US.blogs.txt&quot;, &quot;r&quot;)
+write(readLines(con), file = &quot;./final/en_US/validation_US.txt&quot;, append = TRUE)
+close(con)
+
+con &lt;- file(&quot;./final/en_US/validation_US.news.txt&quot;, &quot;r&quot;)
+write(readLines(con), file = &quot;./final/en_US/validation_US.txt&quot;, append = TRUE)
+close(con)
+
+# testing file
+con &lt;- file(&quot;./final/en_US/test_US.twitter.txt&quot;, &quot;r&quot;)
 write(readLines(con), file = &quot;./final/en_US/test_US.txt&quot;, append = TRUE)
 close(con)
 
@@ -556,7 +587,80 @@ close(con)
 con &lt;- file(&quot;./final/en_US/test_US.news.txt&quot;, &quot;r&quot;)
 write(readLines(con), file = &quot;./final/en_US/test_US.txt&quot;, append = TRUE)
 close(con)</code></pre>
-</div>
+<p>Now, we can make the same general analysis on our training set, and we cn see that in all values, except for one, we have about 10% of the values for the complete sets. This is because we are using about 9.5% of the data. However, if we look at the average words per sete, we can see it is almost the same, so we could say the sample resembles the original.</p>
+<table class="table table-condensed">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+Size.MB
+</th>
+<th style="text-align:center;">
+Rows
+</th>
+<th style="text-align:center;">
+Total Words
+</th>
+<th style="text-align:center;">
+Average Words
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Twitter
+</td>
+<td style="text-align:left;">
+17,119.5
+</td>
+<td style="text-align:center;">
+247,518
+</td>
+<td style="text-align:center;">
+3,158,132
+</td>
+<td style="text-align:center;">
+13
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Blogs
+</td>
+<td style="text-align:left;">
+21,411.6
+</td>
+<td style="text-align:center;">
+94,455
+</td>
+<td style="text-align:center;">
+3,917,623
+</td>
+<td style="text-align:center;">
+41
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+News
+</td>
+<td style="text-align:left;">
+20,941.9
+</td>
+<td style="text-align:center;">
+105,731
+</td>
+<td style="text-align:center;">
+3,643,843
+</td>
+<td style="text-align:center;">
+34
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div id="data-preprocessing" class="section level2">

@@ -111,3 +111,49 @@ close(con)
 con <- file("./final/en_US/test_US.news.txt", "r")
 write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
 close(con)
+
+# Samples overview ####
+
+library(stringi)
+library(formattable)
+
+twitter.file <- ("./final/en_US/train_US.twitter.txt")
+blogs.file <- ("./final/en_US/train_US.blogs.txt")
+news.file <- ("./final/en_US/train_US.news.txt")
+
+twitter <- read_lines(twitter.file)
+blogs <- read_lines(blogs.file)
+news <- read_lines(news.file)
+
+
+rows <- c("Twitter", "Blogs", "News")
+
+Size.MB <- setNames(as.data.frame(
+        file.size(twitter.file, blogs.file, news.file)/1024,
+        row.names = rows),
+        c("Size.MB"))
+
+Rows <- setNames(as.data.frame(c(length(twitter), length(blogs), length(news)),
+                               row.names = rows),
+                 c("Rows"))
+
+Words <- setNames(as.data.frame(c(sum(stri_count_words(twitter)),
+                                  sum(stri_count_words(blogs)),
+                                  sum(stri_count_words(news))),
+                                row.names= rows),
+                  c("Total Words"))
+
+Words.Ave <- setNames(as.data.frame(c(mean(stri_count_words(twitter)),
+                                      mean(stri_count_words(blogs)),
+                                      mean(stri_count_words(news))),
+                                    row.names = rows),
+                      c("Average Words"))
+
+train.data.overview <- cbind(Size.MB, Rows, Words, Words.Ave)
+
+train.data.overview$`Average Words` <- format(round(as.numeric(train.data.overview$`Average Words`),digits = 0), nsmall = 0)
+train.data.overview$`Total Words` <- format(as.numeric(train.data.overview$`Total Words`), nsmall = 0, big.mark =",")
+train.data.overview$Rows <- format(as.numeric(train.data.overview$Rows), nsmall=0, big.mark=",")
+train.data.overview$Size.MB <- format(round(as.numeric(train.data.overview$Size.MB), 1), nsmall=1, big.mark=",")
+
+formattable(train.data.overview, align = c('l', 'c', 'C', 'c', 'c'))

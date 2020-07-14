@@ -74,22 +74,28 @@ formattable(data.overview,
 
 ## Data Sampling
 
-We will join this datasets into one *coropra* and then take samples from it to create two data sets: the **training set** and the **test set**. As a good practice, we will use the 70% of the *corpora* as our **training set** and the other 30% as our **test** set.
+Since the dataset is so large, and due to hardware constrains, we will be using the 15% of the total data. We will join this subsets into one *coropra* and divide them to create three data sets: the **training set**, **validation set** and the **test set**. As a good practice, we will use the 70% of the *corpora* as our **training set**, 20% for our **validation set** and the other 10% as our **test set**.
 
-For practicity we will create separte testing and training files for each one of the **Twitter**, **Blogs** and **News** data sets.
+For practicity we will create separte testing, validation and training files for each one of the **Twitter**, **Blogs** and **News** data sets.
 
 #### Twitter files
 ```{r twitter sampling, eval=FALSE}
 set.seed(123)
 con <- file("./final/en_US/en_US.twitter.txt", "r")
 for (i in 1:n.twitter) {
-        if (rbinom(1,1,.7) == 1) {
-                write(readLines(con,1), file = "./final/en_US/train_US.twitter.txt", append = TRUE)
-        } else {
-                write(readLines(con,1), file = "./final/en_US/test_US.twitter.txt", append = TRUE)
+        if (rbinom(1,1,.15) == 1) {
+                if (rbinom(1,1, .7) == 1) {
+                        write(readLines(con,1), file = "./final/en_US/train_US.twitter.txt", append = TRUE)     
+                } else {
+                        if (rbinom(1,1, .2) == 1) {
+                                write(readLines(con,1), file = "./final/en_US/validation_US.twitter.txt", append = TRUE)
+                        } else {
+                                write(readLines(con, 1), file = "./final/en_US/test_US.twitter.txt", append = TRUE)
+                        }
+                }
+                
         }
 }
-close(con)
 ```
 
 #### Blogs files
@@ -97,10 +103,17 @@ close(con)
 set.seed(456)
 con <- file("./final/en_US/en_US.blogs.txt", "r")
 for (i in 1:n.blogs) {
-        if (rbinom(1,1,.8) == 1) {
-                write(readLines(con,1), file = "./final/en_US/train_US.blogs.txt", append = TRUE)
-        } else {
-                write(readLines(con,1), file = "./final/en_US/test_US.blogs.txt", append = TRUE)
+        if (rbinom(1,1,.15) == 1) {
+                if (rbinom(1,1, .7) == 1) {
+                        write(readLines(con,1), file = "./final/en_US/train_US.blogs.txt", append = TRUE)     
+                } else {
+                        if (rbinom(1,1, .2) == 1) {
+                                write(readLines(con,1), file = "./final/en_US/validation_US.blogs.txt", append = TRUE)
+                        } else {
+                                write(readLines(con, 1), file = "./final/en_US/test_US.blogs.txt", append = TRUE)
+                        }
+                }
+                
         }
 }
 close(con)
@@ -111,19 +124,26 @@ close(con)
 news <- read_lines("./final/en_US/en_US.news.txt")
 set.seed(789)
 for (i in 1:length(news)) {
-        if(rbinom(1,1,.7) == 1) {
-                write(news[i], file = "./final/en_US/train_US.news.txt", append = TRUE)
-        } else {
-                write(news[i], file = "./final/en_US/test_US.news.txt", append = TRUE)
+        if(rbinom(1,1,.15) == 1) {
+                if (rbinom(1,1,.7) == 1) {
+                        write(news[i], file = "./final/en_US/train_US.news.txt", append = TRUE)
+                } else {
+                        if (rbinom(1,1,.2) == 1) {
+                                write(news[i], file = "./final/en_US/validation_US.news.txt", append = TRUE)
+                        } else {
+                                write(news[i], file = "./final/en_US/test_US.news.txt", append = TRUE)
+                        }
+                }
         }
 }
+rm(list = "news")
 ```
 
 #### Final Datasets
-Lastly, we will merge the training and testing sets into two files for easy accesing.
 
-##### Training
+Lastly, we will merge the training and testing sets into two files for easy accesing.
 ```{r training set, eval=FALSE}
+# training file
 con <- file("./final/en_US/train_US.twitter.txt", "r")
 write(readLines(con), file = "./final/en_US/train_US.txt", append = TRUE)
 close(con)
@@ -135,10 +155,21 @@ close(con)
 con <- file("./final/en_US/train_US.news.txt", "r")
 write(readLines(con), file = "./final/en_US/train_US.txt", append = TRUE)
 close(con)
-```
 
-##### Testing
-```{r testing set, eval=FALSE}
+# training file
+con <- file("./final/en_US/validation_US.twitter.txt", "r")
+write(readLines(con), file = "./final/en_US/validation_US.txt", append = TRUE)
+close(con)
+
+con <- file("./final/en_US/validation_US.blogs.txt", "r")
+write(readLines(con), file = "./final/en_US/validation_US.txt", append = TRUE)
+close(con)
+
+con <- file("./final/en_US/validation_US.news.txt", "r")
+write(readLines(con), file = "./final/en_US/validation_US.txt", append = TRUE)
+close(con)
+
+# testing file
 con <- file("./final/en_US/test_US.twitter.txt", "r")
 write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
 close(con)
@@ -152,16 +183,62 @@ write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
 close(con)
 ```
 
+Now, we can make the same general analysis on our training set, and we cn see that in all values, except for one, we have about 10% of the values for the complete sets. This is because we are using about 9.5% of the data. However, if we look at the average words per sete, we can see it is almost the same, so we could say the sample resembles the original.
+
+```{r training data overview, echo = FALSE}
+library(stringi)
+library(formattable)
+
+twitter.file <- ("./final/en_US/train_US.twitter.txt")
+blogs.file <- ("./final/en_US/train_US.blogs.txt")
+news.file <- ("./final/en_US/train_US.news.txt")
+
+twitter <- read_lines(twitter.file)
+blogs <- read_lines(blogs.file)
+news <- read_lines(news.file)
+
+
+rows <- c("Twitter", "Blogs", "News")
+
+Size.MB <- setNames(as.data.frame(
+        file.size(twitter.file, blogs.file, news.file)/1024,
+        row.names = rows),
+        c("Size.MB"))
+
+Rows <- setNames(as.data.frame(c(length(twitter), length(blogs), length(news)),
+                               row.names = rows),
+                 c("Rows"))
+
+Words <- setNames(as.data.frame(c(sum(stri_count_words(twitter)),
+                                  sum(stri_count_words(blogs)),
+                                  sum(stri_count_words(news))),
+                                row.names= rows),
+                  c("Total Words"))
+
+Words.Ave <- setNames(as.data.frame(c(mean(stri_count_words(twitter)),
+                                      mean(stri_count_words(blogs)),
+                                      mean(stri_count_words(news))),
+                                    row.names = rows),
+                      c("Average Words"))
+
+train.data.overview <- cbind(Size.MB, Rows, Words, Words.Ave)
+
+train.data.overview$`Average Words` <- format(round(as.numeric(train.data.overview$`Average Words`),digits = 0), nsmall = 0)
+train.data.overview$`Total Words` <- format(as.numeric(train.data.overview$`Total Words`), nsmall = 0, big.mark =",")
+train.data.overview$Rows <- format(as.numeric(train.data.overview$Rows), nsmall=0, big.mark=",")
+train.data.overview$Size.MB <- format(round(as.numeric(train.data.overview$Size.MB), 1), nsmall=1, big.mark=",")
+formattable(train.data.overview, align = c('l', 'c', 'c', 'c', 'c'))
+```
 ## Data Preprocessing
 
 For this next step we will prepare our data before creating the models. The pipeline we will follow  is as follows:
 
-        1. **Remove special characters:** the punctuaction signs and other special characters, including numbers will be removed.
+        1. Remove special characters: numbes, punctuaction signs and other special characters will be removed.
         2. **Lowercase:** for simplicity we will use all our text in lowercase.
         3. **Profanity filtering:** since we don't want our model to predict 'bad' words.
         
 ##### Special Characters and Lowercasing
-```{r remove cleaning the dataset}
+```{r remove cleaning the dataset, eval=FALSE}
 train <- read_lines("./final/en_US/train_US.txt")
 
 library(tm)
@@ -189,10 +266,10 @@ train <- removeWords(train, badwords)
 
 We will use the 'quanteda' library to create our N-grams model, and the process is the next:
 
-        1. **Tokenization:**
-        2. **Remove stopwords:**
-        3. **Stemming:**
-        4. **Create the N-grams:**
+        1. Tokenization: we will create tokens to manipulate our data in the quanteda package.
+        2. Remove stopwords: we will remove stopwords which are words that don't add much information.
+        3. Stemming: we will remove the variations of the words to keep the 'root' for each one.
+        4. Create the N-grams: finally we will create our uni-gram, bi-gram and tri-gram models.
         
 ```{r ngram model, eval=FALSE}
 library(quanteda)
