@@ -27,11 +27,15 @@ close(con)
 
 train <- removeWords(train, badwords)
 
+start.time <- Sys.time()
 train.tokens <- tokens(train, what = "word",
                        remove_numbers = TRUE, remove_punct = TRUE,
                        remove_symbols = TRUE, split_hyphens = TRUE)
+total.time <- start.time - Sys.time()
 
+start.time <- Sys.time()
 train.tokens <- tokens_tolower(train.tokens)
 train.tokens <- tokens_select(train.tokens, stopwords(), selection = "remove")
 train.tokens <- tokens_wordstem(train.tokens, language = "english")
 train.tokens.dfm <- dfm(train.tokens, tolower = FALSE)
+total.time <- start.time - Sys.time()
