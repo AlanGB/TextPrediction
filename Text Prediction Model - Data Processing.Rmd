@@ -19,7 +19,7 @@ The goal of this project is to create a Text Prediction Model (for the English L
 
 After downloading and extracting the datasets we are interested in, which are a file with **Twitter**, **Blogs** and **News** entries, we can start seeing interesting aspects of the data.
 
-```{r data loading}
+```{r data loading, cache=FALSE}
 library(readr)
 twitter.file <- ("./final/en_US/en_US.twitter.txt")
 blogs.file <- ("./final/en_US/en_US.blogs.txt")
@@ -32,7 +32,7 @@ news <- read_lines(news.file)
 
 Here we can see the files are fairly large, but have about the same word count. Also, as expected, Twitter is the file with more lines but less Average words, because of the character limit per twitt. Blogs is the file with more words per register, followed by news.
 
-```{r data overvew, warning=FALSE}
+```{r data overvew, warning=FALSE, cache=FALSE}
 library(stringi)
 rows <- c("Twitter", "Blogs", "News")
 
@@ -60,7 +60,7 @@ Words.Ave <- setNames(as.data.frame(c(mean(stri_count_words(twitter)),
 data.overview <- cbind(Size.MB, Rows, Words, Words.Ave)
 ```
 
-```{r data overview table, echo = FALSE, warning=FALSE}
+```{r data overview table, echo = FALSE, warning=FALSE, cache=FALSE}
 library(formattable)
 data.overview$`Average Words` <- format(round(as.numeric(data.overview$`Average Words`),digits = 0), nsmall = 0)
 data.overview$`Total Words` <- format(as.numeric(data.overview$`Total Words`), nsmall = 0, big.mark =",")
@@ -141,8 +141,7 @@ rm(list = "news")
 
 #### Final Datasets
 
-Lastly, we will merge the training and testing sets into two files for easy accesing.
-```{r training set, eval=FALSE}
+```{r training set, eval=FALSE, echo = FALSE}
 # training file
 con <- file("./final/en_US/train_US.twitter.txt", "r")
 write(readLines(con), file = "./final/en_US/train_US.txt", append = TRUE)
@@ -231,58 +230,51 @@ formattable(train.data.overview, align = c('l', 'c', 'c', 'c', 'c'))
 ```
 ## Data Preprocessing
 
-For this next step we will prepare our data before creating the models. The pipeline we will follow  is as follows:
+For this next step we will prepare our data before creating the models. The pipeline  is as follows:
 
         1. Remove special characters: numbes, punctuaction signs and other special characters will be removed.
-        2. **Lowercase:** for simplicity we will use all our text in lowercase.
-        3. **Profanity filtering:** since we don't want our model to predict 'bad' words.
+        2. Lowercase: for simplicity we will use all our text in lowercase.
+        3. Tokenize: each line of text will be devided int 'tokens' or individual words for analysis.
         
-##### Special Characters and Lowercasing
-```{r remove cleaning the dataset, eval=FALSE}
+Other considerations:
+
+        1. For this analysis we won't be removing 'stopwords' since we hypothesize they will be useful for predictions.
+        2. We won't be stemming the words, since, again, we hypothesize that different variations of the words will preced different words.
+        
+```{r tokenization, eval=TRUE}
+library(quanteda)
 train <- read_lines("./final/en_US/train_US.txt")
 
-library(tm)
-
-#Removing special characters
-train <- iconv(train, to = "UTF-8")
-train <- removePunctuation(train)
-train <- removeNumbers(train)
-train <- stripWhitespace(train)
-
-#Lowercasing
-train <- tolower(train)
-
-#Profanity filtering
-library(tm)
-
-con <- url("http://www.bannedwordlist.com/lists/swearWords.txt","r")
-badwords <- readLines(con)
-close(con)
-
-train <- removeWords(train, badwords)
-```
- 
-## N-Gram Model
-
-We will use the 'quanteda' library to create our N-grams model, and the process is the next:
-
-        1. Tokenization: we will create tokens to manipulate our data in the quanteda package.
-        2. Remove stopwords: we will remove stopwords which are words that don't add much information.
-        3. Stemming: we will remove the variations of the words to keep the 'root' for each one.
-        4. Create the N-grams: finally we will create our uni-gram, bi-gram and tri-gram models.
-        
-```{r ngram model, eval=FALSE}
-library(quanteda)
-
-#Tokenize
 train.tokens <- tokens(train, what = "word",
                        remove_numbers = TRUE, remove_punct = TRUE,
                        remove_symbols = TRUE, split_hyphens = TRUE)
-#Removing stopwords
-train.tokens <- tokens_select(train.tokens, stopwords(), selection = "remove")
 
-#Stemming
-train.tokens <- tokens_wordstem(train.tokens, language = "english")
+train.tokens <- tokens_tolower(train.tokens)
 train.tokens.dfm <- dfm(train.tokens, tolower = FALSE)
-
 ```
+ 
+## N-Gram Models
+
+### 1-gram Model
+
+When we tokenized our dataset, we also created our first N-gram model, a 1-gram model (or unigram), which are bassically single words. This is a first step to creating our model. We can now see things like the most frequent n-grams.
+        
+```{r unigram plot code, eval=TRUE}
+library(ggplot2)
+library(quanteda)
+train.unigram.freq <- textstat_frequency(train.tokens.dfm, n = 20)
+train.unigram.freq$feature <- factor(train.unigram.freq$feature,
+                                     levels = train.unigram.freq$feature[order(train.unigram.freq$frequency)])
+
+
+
+unigrams.plot <- ggplot(train.unigram.freq, 
+                        aes(x = train.unigram.freq$feature,
+                            y = train.unigram.freq$frequency)) +
+        geom_col() + coord_flip() + labs(x = NULL, y = "Frequency")
+```
+
+```{r unigram plot fig, echo=FALSE, eval=TRUE}
+unigrams.plot
+```
+
