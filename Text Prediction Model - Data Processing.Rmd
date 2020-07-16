@@ -13,7 +13,7 @@ knitr::opts_chunk$set(message = FALSE)
 
 ## Summary
 
-The goal of this project is to create a Text Prediction Model (for the English Language) using the [Capstone Dataset](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) given by Coursera. In this report you will find an Overview of the data, as well as the steps taken for cleaning and processing the data. Lastly, there are the N-gram Models that will be used for creating the final product.
+The goal of this project is to create a Text Prediction Model (for the English Language) using the [Capstone Dataset](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip) given by Coursera. In this report you will find an overview of the dataset, as well as the steps taken for cleaning and processing it. Lastly, there are the N-gram Models that will be used for creating the final product.
 
 ## Data Overview
 
@@ -182,7 +182,7 @@ write(readLines(con), file = "./final/en_US/test_US.txt", append = TRUE)
 close(con)
 ```
 
-Now, we can make the same general analysis on our training set, and we cn see that in all values, except for one, we have about 10% of the values for the complete sets. This is because we are using about 9.5% of the data. However, if we look at the average words per sete, we can see it is almost the same, so we could say the sample resembles the original.
+Now, we can make the same general analysis on our training set. Here we see that in all variables, except for one, we have about 10% of the original values for the complete sets. This is because we are using about 9.5% of the data. However, if we look at the average words per set, we can see it is almost the same. So we could conclude the sample set resembles the original set.
 
 ```{r training data overview, echo = FALSE}
 library(stringi)
@@ -228,9 +228,10 @@ train.data.overview$Rows <- format(as.numeric(train.data.overview$Rows), nsmall=
 train.data.overview$Size.MB <- format(round(as.numeric(train.data.overview$Size.MB), 1), nsmall=1, big.mark=",")
 formattable(train.data.overview, align = c('l', 'c', 'c', 'c', 'c'))
 ```
+
 ## Data Preprocessing
 
-For this next step we will prepare our data before creating the models. The pipeline  is as follows:
+For this next step we will prepare our data, previous to the creations of our model. The pipeline  is as follows:
 
         1. Remove special characters: numbes, punctuaction signs and other special characters will be removed.
         2. Lowercase: for simplicity we will use all our text in lowercase.
@@ -271,10 +272,49 @@ train.unigram.freq$feature <- factor(train.unigram.freq$feature,
 unigrams.plot <- ggplot(train.unigram.freq, 
                         aes(x = train.unigram.freq$feature,
                             y = train.unigram.freq$frequency)) +
-        geom_col() + coord_flip() + labs(x = NULL, y = "Frequency")
-```
+        geom_col() + coord_flip() + labs(x = NULL, y = "Frequency") +
+        ggtitle("Top 20 Unigrams Frequency")
 
-```{r unigram plot fig, echo=FALSE, eval=TRUE}
 unigrams.plot
 ```
 
+As we can see, most of the Top 20 are stopwords, which by themselves won't provide much information. Let's make this same analysis for bi-grams and tri-grams.
+
+Here we can see that some of the Top n-grams are included in the bi-grams en tri-grams, this can be usefull for creating our prediction model.
+
+```{r bigrams and trigrams plots, echo=FALSE}
+# BIGRAMS ####
+train.bigrams <- tokens_ngrams(train.tokens, n = 2)
+train.bigrams.dfm <- dfm(train.bigrams)
+train.bigrams.freq <- textstat_frequency(train.bigrams.dfm, n = 20)
+train.bigrams.freq$feature <- factor(train.bigrams.freq$feature,
+                                     levels = train.bigrams.freq$feature[order(train.bigrams.freq$frequency)])
+
+
+bigrams.plot <- ggplot(train.bigrams.freq, 
+                        aes(x = train.bigrams.freq$feature,
+                            y = train.bigrams.freq$frequency)) +
+        geom_col() + coord_flip() + labs(x = NULL, y = "Frequency") +
+        ggtitle("Top 20 Bigrams Frequency")
+
+# TRIGRAMS ####
+train.trigrams <- tokens_ngrams(train.tokens, n = 3)
+train.trigrams.dfm <- dfm(train.trigrams)
+train.trigrams.freq <- textstat_frequency(train.trigrams.dfm, n = 20)
+train.trigrams.freq$feature <- factor(train.trigrams.freq$feature,
+                                     levels = train.trigrams.freq$feature[order(train.trigrams.freq$frequency)])
+
+
+trigrams.plot <- ggplot(train.trigrams.freq, 
+                       aes(x = train.trigrams.freq$feature,
+                           y = train.trigrams.freq$frequency)) +
+        geom_col() + coord_flip() + labs(x = NULL, y = "Frequency") +
+        ggtitle("Top 20 Trigrams Frequency")
+
+library(gridExtra)
+grid.arrange(bigrams.plot, trigrams.plot, nrow=1)
+```
+
+## Conclusions and Next steps.
+
+After this excersise we can make some conclusions. First, the complete dataset is too big, but with a subset of it we can work our model. Second, the n-grams models can be useful to create our algorithm. Finally, as we excluded a big part of our initial data, we need to think about how the model will handle unseen words, this will be an interesting challenge, previous to the creation of our app.
