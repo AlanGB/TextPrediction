@@ -3,6 +3,7 @@ setwd("~/Alán/CapstoneProject")
 library(quanteda)
 library(readr)
 library(tm)
+library(stringi)
 
 # Tokenization and N-grams frequencies ####
 
@@ -46,13 +47,27 @@ rm(list = c("train.fivegrams", "train.fivegrams.dfm"))
 input <- "Hey sunshine, can you follow me and make me the"
 
 # Data processing
-
 # Get 4 to 1 grams
 
-
-
-input <- removePunctuation(input)
-
-input.token <- tokens(input, what = "word",
-                      remove_numbers = TRUE, remove_punct = TRUE,
-                      remove_symbols = TRUE, split_hyphens = TRUE)
+make.ngrams <- function(x){
+        
+        x <- removePunctuation(x)
+        x <- iconv(x)
+        x <- tolower(x)
+        x <- removeNumbers(x)
+        x <- stripWhitespace(x)
+        
+        total.words <- min(4,sapply(strsplit(x, " "), length))
+        total.ngrams <- as.data.frame(NULL)
+                
+        while (total.words > 0){
+                
+                patt = sprintf("\\w+( \\w+){0,%d}$", total.words-1)
+                ngram <- stri_extract(x, regex = patt)
+                ngram <- gsub(" ","_", ngram)
+                total.ngrams <- rbind(total.ngrams,ngram)
+                total.words <- total.words - 1
+        }
+        colnames(total.ngrams) <- "ngrams"
+        return(total.ngrams)
+}
