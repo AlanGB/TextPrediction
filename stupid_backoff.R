@@ -51,6 +51,8 @@ input <- "Hey sunshine, can you follow me and make me the"
 
 make.ngrams <- function(x){
         
+        library(tm)
+        
         x <- removePunctuation(x)
         x <- iconv(x)
         x <- tolower(x)
@@ -58,16 +60,15 @@ make.ngrams <- function(x){
         x <- stripWhitespace(x)
         
         total.words <- min(4,sapply(strsplit(x, " "), length))
-        total.ngrams <- as.data.frame(NULL)
+        total.ngrams <<- as.data.frame(NULL)
                 
         while (total.words > 0){
                 
                 patt = sprintf("\\w+( \\w+){0,%d}$", total.words-1)
                 ngram <- stri_extract(x, regex = patt)
                 ngram <- gsub(" ","_", ngram)
-                total.ngrams <- rbind(total.ngrams,ngram)
+                total.ngrams <<- rbind(total.ngrams,ngram)
                 total.words <- total.words - 1
         }
         colnames(total.ngrams) <- "ngrams"
-        return(total.ngrams)
 }
